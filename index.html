@@ -657,17 +657,48 @@ td{border-bottom:1px solid var(--linea)}
 
 <section id="v3" class="view">
 <div class="grid">
-<div class="card"><div class="card-title">Pendientes de corroboración</div><div class="card-body"><div id="pendingList"></div></div></div>
-<div class="card"><div class="card-title">Revisión final</div><div class="card-body"><div id="reviewEmpty" class="empty">Seleccioná una participación.</div><div id="review" hidden>
-<div class="g2"><div class="field"><label>Equipo</label><input id="reviewTeam" readonly></div><div class="field"><label>Modalidad</label><input id="reviewMode" readonly></div></div>
-<div class="g3"><div class="field"><label>Minutos</label><input id="rMin" type="number"></div><div class="field"><label>Segundos</label><input id="rSec" type="number"></div><div class="field"><label>Centésimas</label><input id="rCent" type="number"></div></div>
-<div class="field"><label>Observación final</label><textarea id="reviewObs"></textarea></div>
-<div class="field">
-  <label>Penalizaciones — revisión final</label>
-  <div id="reviewPenalties"></div>
-  <button id="addReviewPenalty" type="button" class="btn btn-dark" style="width:100%">+ Agregar penalización</button>
+<div class="card"><div class="card-title">Enfrentamientos pendientes de corroboración</div><div class="card-body"><div id="pendingList"></div></div></div>
+<div class="card"><div class="card-title">Revisión final del enfrentamiento</div><div class="card-body"><div id="reviewEmpty" class="empty">Seleccioná un enfrentamiento para revisarlo.</div><div id="review" hidden>
+<div class="field"><label>Modalidad</label><input id="reviewMode" readonly></div>
+<div class="grid">
+  <div>
+    <div class="active-team"><small>Equipo A</small><strong id="revATeam">—</strong></div>
+    <div class="g3">
+      <div class="field"><label>Minutos</label><input id="revAMin" type="number" min="0"></div>
+      <div class="field"><label>Segundos</label><input id="revASec" type="number" min="0" max="59"></div>
+      <div class="field"><label>Centésimas</label><input id="revACent" type="number" min="0" max="99"></div>
+    </div>
+    <div class="field"><label>Observaciones Equipo A</label><textarea id="revAObs"></textarea></div>
+    <div id="revAPenalties"></div>
+    <button id="addRevAPenalty" type="button" class="btn btn-dark" style="width:100%">+ Penalización Equipo A</button>
+    <div class="metrics">
+      <div class="metric"><strong id="revABase">00:00.00</strong><small>Tiempo</small></div>
+      <div class="metric"><strong id="revAPen">+00:00.00</strong><small>Penalización</small></div>
+      <div class="metric"><strong id="revARep">0</strong><small>Reincidencias</small></div>
+      <div class="metric final"><strong id="revAFinal">00:00.00</strong><small>Final</small></div>
+    </div>
+  </div>
+  <div>
+    <div class="active-team"><small>Equipo B</small><strong id="revBTeam">—</strong><button id="unlinkB" type="button" class="btn btn-outline" style="margin-top:8px;display:none">✕ Quitar vínculo</button></div>
+    <div id="revBFields">
+      <div class="g3">
+        <div class="field"><label>Minutos</label><input id="revBMin" type="number" min="0"></div>
+        <div class="field"><label>Segundos</label><input id="revBSec" type="number" min="0" max="59"></div>
+        <div class="field"><label>Centésimas</label><input id="revBCent" type="number" min="0" max="99"></div>
+      </div>
+      <div class="field"><label>Observaciones Equipo B</label><textarea id="revBObs"></textarea></div>
+      <div id="revBPenalties"></div>
+      <button id="addRevBPenalty" type="button" class="btn btn-dark" style="width:100%">+ Penalización Equipo B</button>
+      <div class="metrics">
+        <div class="metric"><strong id="revBBase">00:00.00</strong><small>Tiempo</small></div>
+        <div class="metric"><strong id="revBPen">+00:00.00</strong><small>Penalización</small></div>
+        <div class="metric"><strong id="revBRep">0</strong><small>Reincidencias</small></div>
+        <div class="metric final"><strong id="revBFinal">00:00.00</strong><small>Final</small></div>
+      </div>
+    </div>
+    <div id="revBEmpty" class="empty" hidden>Este equipo no tiene rival vinculado — se corrobora/publica solo.</div>
+  </div>
 </div>
-<div class="metrics"><div class="metric"><strong id="rBase">00:00.00</strong><small>Tiempo</small></div><div class="metric"><strong id="rPen">+00:00.00</strong><small>Penalización</small></div><div class="metric"><strong id="rRep">0</strong><small>Reincidencias</small></div><div class="metric final"><strong id="rFinal">00:00.00</strong><small>Final</small></div></div>
 <div class="actions" style="margin-top:10px"><button id="saveReview" class="btn btn-dark">Guardar cambios</button><button id="publish" class="btn btn-green">Corroborar y publicar</button></div>
 </div></div></div>
 </div>
@@ -702,7 +733,7 @@ td{border-bottom:1px solid var(--linea)}
 "use strict";
 const MODES=['GRUPAL MASCULINO','GRUPAL FEMENINO','GRUPO MIXTO','INDIVIDUAL MASCULINO','INDIVIDUAL FEMENINO','INDIVIDUAL MASCULINO +50','INDIVIDUAL FEMENINO +50','GRUPAL MASCULINO +50','GRUPAL FEMENINO +50','GRUPO MIXTO +50'];
 const PEN=[['Error técnico',5],['Incumplimiento de recorrido',10],['Elemento fuera de lugar',5],['Falta de elemento',15],['Conducta antideportiva',20],['Otra',5]];
-let teams=[],results=[],logs=[],fixture=[],editTeam=null,reviewIndex=null;
+let teams=[],results=[],logs=[],fixture=[],editTeam=null,reviewMatch=null;
 const API_URL='https://script.google.com/macros/s/AKfycbyRsnyjtKoIFqkLhWE-OBc8wRM_CFxK4Zeuk94YXNRV4Wt7a3ESsNqMNe_ufebiHBW2QQ/exec';
 let syncing=false;
 
@@ -838,6 +869,52 @@ function loadOfflineCache(){
   }catch(e){return false}
 }
 
+/* ===== Emparejamiento de enfrentamientos (para corroborar por duelo) =====
+   El backend guarda cada resultado por separado (equipo + modalidad), sin
+   un id de "enfrentamiento". Para poder corroborar/publicar los 2 juntos,
+   guardamos acá — en este dispositivo — qué equipo enfrentó a qué equipo
+   en cada modalidad, y con eso arma los pares en la pantalla de Corroborar.
+   Si el enfrentamiento se cargó desde OTRO dispositivo, no vamos a tener
+   este dato: por eso la pantalla de Corroborar también permite vincular
+   manualmente dos pendientes de la misma modalidad. */
+const DUEL_PAIRS_KEY='copa-integracion-duelos-v1';
+let duelPairs=[];
+function loadDuelPairs(){
+  try{duelPairs=JSON.parse(localStorage.getItem(DUEL_PAIRS_KEY)||'[]')}catch(e){duelPairs=[]}
+}
+function saveDuelPairs(){
+  try{localStorage.setItem(DUEL_PAIRS_KEY,JSON.stringify(duelPairs))}catch(e){/* sin almacenamiento */}
+}
+function recordDuelPair(mode,aNo,bNo){
+  duelPairs=duelPairs.filter(p=>!(p.mode===mode&&((p.aNo===aNo&&p.bNo===bNo)||(p.aNo===bNo&&p.bNo===aNo))));
+  duelPairs.push({mode,aNo,bNo,ts:Date.now()});
+  saveDuelPairs();
+}
+// Agrupa las participaciones pendientes en enfrentamientos {mode,a,b(?)}.
+function buildMatchups(){
+  const pending=results.filter(r=>!r.published);
+  const used=new Set();
+  const matchups=[];
+  pending.forEach(r=>{
+    const key=r.mode+'|'+r.no;
+    if(used.has(key))return;
+    const pairRec=duelPairs.filter(p=>p.mode===r.mode&&(p.aNo===r.no||p.bNo===r.no)).sort((x,y)=>y.ts-x.ts)[0];
+    let partner=null;
+    if(pairRec){
+      const partnerNo=pairRec.aNo===r.no?pairRec.bNo:pairRec.aNo;
+      partner=pending.find(x=>x.mode===r.mode&&x.no===partnerNo&&!used.has(x.mode+'|'+x.no));
+    }
+    if(partner){
+      used.add(r.mode+'|'+r.no);used.add(partner.mode+'|'+partner.no);
+      matchups.push({mode:r.mode,a:r,b:partner,paired:true});
+    }else{
+      used.add(key);
+      matchups.push({mode:r.mode,a:r,b:null,paired:false});
+    }
+  });
+  return matchups;
+}
+
 /* ===== Cola de acciones pendientes (sin conexión) ===== */
 const QUEUE_KEY='copa-integracion-queue-v1';
 let pendingQueue=[];
@@ -866,6 +943,18 @@ function queuePush(payload,label){
 // guarda en la cola y aplica el cambio localmente (modo optimista) para
 // que la app se vea actualizada aunque no haya conexión.
 async function submitAction(payload,applyLocalFn,label){
+  // Si ya hay acciones pendientes de subir, esta se encola DETRÁS de ellas
+  // en vez de intentar mandarla directo — así nunca puede llegar al
+  // servidor una acción nueva antes que una vieja que sigue esperando
+  // conexión (ej: una edición no puede adelantarse a la creación de ese
+  // mismo equipo).
+  if(pendingQueue.length>0){
+    if(applyLocalFn) applyLocalFn();
+    queuePush(payload,label);
+    saveOfflineCache();
+    flushQueue();
+    return {queued:true};
+  }
   try{
     const data=await apiPost(payload);
     return {queued:false,data};
@@ -874,6 +963,7 @@ async function submitAction(payload,applyLocalFn,label){
     if(applyLocalFn) applyLocalFn();
     queuePush(payload,label);
     saveOfflineCache();
+    flushQueue();
     return {queued:true};
   }
 }
@@ -995,6 +1085,7 @@ document.querySelectorAll('.tab').forEach(b=>b.addEventListener('click',()=>swit
 
 function required(m){return m.startsWith('INDIVIDUAL')?1:4}
 function fmt(t){t=Math.max(0,Number(t)||0);let m=Math.floor(t/60),s=Math.floor(t%60),c=Math.round((t-Math.floor(t))*100);if(c>=100){c=0;s++}if(s>=60){s=0;m++}return `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}.${String(c).padStart(2,'0')}`}
+function clampNonNeg(id){const el=$(id);if(el&&el.value!==''&&+el.value<0)el.value=0;}
 function escapeHtml(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]))}
 function selectedModes(){return [...document.querySelectorAll('#modes input:checked')].map(x=>x.value)}
 function collectPeople(){
@@ -1025,7 +1116,7 @@ function clearTeam(){editTeam=null;$('teamNo').value='';$('teamName').value='';$
 $('clearTeam').onclick=clearTeam;
 $('saveTeam').onclick=async()=>{
  const no=+$('teamNo').value,name=$('teamName').value.trim(),captain=$('captain').value.trim(),modes=selectedModes(),people=collectPeople();
- if(!no||!name){alert('Ingresá número de equipo y delegación.');return}
+ if(!no||no<=0||!Number.isInteger(no)||!name){alert('Ingresá un número de equipo válido (entero mayor a 0) y la delegación.');return}
  if(!modes.length){alert('Seleccioná al menos una modalidad.');return}
  for(const m of modes){if((people[m]||[]).length!==required(m)||(people[m]||[]).some(p=>!p.name)){alert('Completá todos los integrantes de '+m+'.');return}}
  if(teams.some((t,i)=>t.no===no&&i!==editTeam)){alert('Ese número de equipo ya existe.');return}
@@ -1051,9 +1142,11 @@ $('saveTeam').onclick=async()=>{
  finally{setSaving($('saveTeam'),false)}
 };
 function editT(i){const t=teams[i];editTeam=i;$('teamNo').value=t.no;$('teamName').value=t.name;$('captain').value=t.captain;document.querySelectorAll('#modes input').forEach(x=>x.checked=t.modes.includes(x.value));renderPeople(t.people);switchView('v1');window.scrollTo({top:0,behavior:'smooth'})}
-async function deleteT(i){
+async function deleteT(i,evt){
  const t=teams[i],related=results.filter(r=>r.no===t.no).length;
  if(!confirm(`¿Eliminar Equipo #${t.no} — ${t.name}?${related?`\nTambién se eliminarán ${related} participaciones.`:''}`))return;
+ const btn=evt&&evt.currentTarget;
+ if(btn){if(btn.disabled)return;btn.disabled=true;}
  try{
    const res=await submitAction({accion:'eliminar_equipo',numero:t.no},()=>applyDeleteTeamLocally(t.no),'Eliminar equipo #'+t.no);
    if(res.queued){
@@ -1062,6 +1155,7 @@ async function deleteT(i){
      await syncEstadoRapido();
    }
  }catch(err){alert('No se pudo eliminar: '+err.message)}
+ finally{if(btn)btn.disabled=false}
 }
 window.editT=editT;window.deleteT=deleteT;
 function modeStatus(t,m){
@@ -1086,7 +1180,7 @@ function renderTeams(){
      <div>${modes}</div>
    </div><div class="actions">
      <button class="btn btn-outline" onclick="editT(${i})">Editar</button>
-     <button class="btn btn-delete" onclick="deleteT(${i})">Eliminar</button>
+     <button class="btn btn-delete" onclick="deleteT(${i},event)">Eliminar</button>
    </div></div>`;
  }).join(''):'<div class="empty">No hay equipos registrados.</div>';
 }
@@ -1122,7 +1216,7 @@ function collectDuelPen(side){
   const holder=$(side==='a'?'aPenalties':'bPenalties');
   return [...holder.querySelectorAll('.duel-penalty')].map(d=>({
     type:+d.querySelector('.ptype').value,
-    seconds:+d.querySelector('.pseconds').value||0,
+    seconds:Math.max(0,+d.querySelector('.pseconds').value||0),
     repeat:d.querySelector('.prepeat').value==='SÍ',
     detail:d.querySelector('.pdetail').value.trim()
   }));
@@ -1140,8 +1234,8 @@ function calcDuel(side){
   $(`${prefix}Final`).textContent=fmt(time+pen);
 }
 
-['aMin','aSec','aCent'].forEach(id=>$(id).addEventListener('input',()=>calcDuel('a')));
-['bMin','bSec','bCent'].forEach(id=>$(id).addEventListener('input',()=>calcDuel('b')));
+['aMin','aSec','aCent'].forEach(id=>$(id).addEventListener('input',()=>{clampNonNeg(id);calcDuel('a')}));
+['bMin','bSec','bCent'].forEach(id=>$(id).addEventListener('input',()=>{clampNonNeg(id);calcDuel('b')}));
 
 $('duelMode').onchange=()=>{
   const mode=$('duelMode').value;
@@ -1211,6 +1305,7 @@ $('saveDuel').onclick=async()=>{
 
   const sideA={numero:a.no,tiempoSegundos:aTime,penalizaciones:mapPen(collectDuelPen('a')),observaciones:$('aObs').value.trim()};
   const sideB={numero:b.no,tiempoSegundos:bTime,penalizaciones:mapPen(collectDuelPen('b')),observaciones:$('bObs').value.trim()};
+  recordDuelPair(mode,a.no,b.no);
 
   try{
     setSaving($('saveDuel'),true,'Guardando los 2 resultados...');
@@ -1232,10 +1327,49 @@ $('saveDuel').onclick=async()=>{
   }
 }
 
-function renderPending(){$('pendingList').innerHTML=results.length?results.map((r,i)=>`<div class="pending"><div><strong>#${r.no} · ${escapeHtml(r.name)}</strong><small>${r.mode} · ${fmt(r.final)} ${r.published?'· PUBLICADO':'· PENDIENTE'}</small></div><button class="btn btn-outline" onclick="openReview(${i})">Revisar</button></div>`).join(''):'<div class="empty">No hay participaciones para corroborar.</div>'}
-function reviewPenaltyRow(d={}){
+function renderPending(){
+  const matchups=buildMatchups();
+  window.__matchups=matchups;
+  $('pendingList').innerHTML=matchups.length?matchups.map((m,mi)=>{
+    let bBlock;
+    if(m.paired){
+      bBlock=`<div style="margin-top:6px;padding-top:6px;border-top:1px solid var(--line)"><strong>#${m.b.no} · ${escapeHtml(m.b.name)}</strong><br><small style="color:var(--muted)">${fmt(m.b.final)}</small></div>`;
+    }else{
+      const usedNos=matchups.filter(x=>x!==m).flatMap(x=>[x.a.no,x.b?x.b.no:null]).filter(v=>v!=null);
+      const others=results.filter(r=>!r.published&&r.mode===m.mode&&r.no!==m.a.no&&!usedNos.includes(r.no));
+      const opts=others.map(o=>`<option value="${o.no}">#${o.no} — ${escapeHtml(o.name)}</option>`).join('');
+      bBlock=`<div class="field" style="margin-top:8px"><label>Vincular con rival pendiente</label>
+        <select class="pair-select">
+          <option value="">— Sin rival (corroborar solo) —</option>${opts}
+        </select></div>`;
+    }
+    return `<div class="pending" style="grid-template-columns:1fr;gap:6px">
+      <div>
+        <strong>${escapeHtml(m.mode)}</strong>
+        <div style="margin-top:6px"><strong>#${m.a.no} · ${escapeHtml(m.a.name)}</strong><br><small style="color:var(--muted)">${fmt(m.a.final)}</small></div>
+        ${bBlock}
+      </div>
+      <button class="btn btn-outline" data-openmatch="${mi}" style="width:100%">Revisar enfrentamiento</button>
+    </div>`;
+  }).join(''):'<div class="empty">No hay participaciones para corroborar.</div>';
+  $('pendingList').querySelectorAll('[data-openmatch]').forEach(btn=>{
+    btn.addEventListener('click',()=>{
+      const m=window.__matchups[+btn.dataset.openmatch];
+      const select=btn.parentElement.querySelector('.pair-select');
+      let bNo=m.b?m.b.no:null;
+      if(!m.paired&&select&&select.value){
+        bNo=+select.value;
+        recordDuelPair(m.mode,m.a.no,bNo);
+      }
+      openMatch(m.mode,m.a.no,bNo);
+    });
+  });
+}
+
+function revPenaltyRow(side,d={}){
+ const holder=$(side==='A'?'revAPenalties':'revBPenalties');
  const div=document.createElement('div');
- div.className='penalty review-penalty';
+ div.className='penalty rev-penalty';
  div.innerHTML=`<div class="pen-grid">
    <div><label>Tipo</label><select class="rtype">${PEN.map((p,i)=>`<option value="${i}">${p[0]}</option>`).join('')}</select></div>
    <div><label>Segundos</label><input class="rseconds" type="number" min="0" value="${d.seconds??5}"></div>
@@ -1247,62 +1381,164 @@ function reviewPenaltyRow(d={}){
  div.querySelector('.rrepeat').value=d.repeat?'SÍ':'NO';
  div.querySelector('.rtype').addEventListener('change',e=>{
    div.querySelector('.rseconds').value=PEN[+e.target.value][1];
-   calcReview();
+   calcRev(side);
  });
- div.querySelectorAll('input,select').forEach(x=>x.addEventListener('input',calcReview));
- div.querySelector('.x').onclick=()=>{div.remove();calcReview()};
- $('reviewPenalties').appendChild(div);
+ div.querySelectorAll('input,select').forEach(x=>x.addEventListener('input',()=>calcRev(side)));
+ div.querySelector('.x').onclick=()=>{div.remove();calcRev(side)};
+ holder.appendChild(div);
 }
-function collectReviewPenalties(){
- return [...document.querySelectorAll('#reviewPenalties .review-penalty')].map(d=>({
+function collectRevPen(side){
+ const holder=$(side==='A'?'revAPenalties':'revBPenalties');
+ return [...holder.querySelectorAll('.rev-penalty')].map(d=>({
    type:+d.querySelector('.rtype').value,
-   seconds:+d.querySelector('.rseconds').value||0,
+   seconds:Math.max(0,+d.querySelector('.rseconds').value||0),
    repeat:d.querySelector('.rrepeat').value==='SÍ',
    detail:d.querySelector('.rdetail').value.trim()
  }));
 }
-$('addReviewPenalty').onclick=()=>reviewPenaltyRow();
+$('addRevAPenalty').onclick=()=>revPenaltyRow('A');
+$('addRevBPenalty').onclick=()=>revPenaltyRow('B');
 
-function openReview(i){reviewIndex=i;const r=results[i];$('reviewEmpty').hidden=true;$('review').hidden=false;$('reviewTeam').value=`#${r.no} — ${r.name}`;$('reviewMode').value=r.mode;$('rMin').value=Math.floor(r.time/60);$('rSec').value=Math.floor(r.time%60);$('rCent').value=Math.round((r.time-Math.floor(r.time))*100);$('reviewObs').value=r.obs;$('reviewPenalties').innerHTML='';(r.penalties||[]).forEach(reviewPenaltyRow);calcReview()}
-window.openReview=openReview;
-function calcReview(){
- if(reviewIndex===null)return;
- const time=(+$('rMin').value||0)*60+(+$('rSec').value||0)+(+$('rCent').value||0)/100;
- const penalties=collectReviewPenalties();
- const pen=penalties.reduce((a,x)=>a+x.seconds*(x.repeat?2:1),0);
- const rep=penalties.filter(x=>x.repeat).length;
- $('rBase').textContent=fmt(time);
- $('rPen').textContent='+'+fmt(pen);
- $('rRep').textContent=rep;
- $('rFinal').textContent=fmt(time+pen);
+function calcRev(side){
+ const p=side==='A'?'revA':'revB';
+ if(!$(p+'Min'))return;
+ const time=(+$(p+'Min').value||0)*60+(+$(p+'Sec').value||0)+(+$(p+'Cent').value||0)/100;
+ const pen=collectRevPen(side);
+ const total=pen.reduce((s,x)=>s+x.seconds*(x.repeat?2:1),0);
+ const rep=pen.filter(x=>x.repeat).length;
+ $(p+'Base').textContent=fmt(time);
+ $(p+'Pen').textContent='+'+fmt(total);
+ $(p+'Rep').textContent=rep;
+ $(p+'Final').textContent=fmt(time+total);
 }
-['rMin','rSec','rCent'].forEach(id=>$(id).addEventListener('input',calcReview));
-async function saveReview(publish){
- if(reviewIndex===null)return;
- const r=results[reviewIndex];
- const time=(+$('rMin').value||0)*60+(+$('rSec').value||0)+(+$('rCent').value||0)/100;
- const penalties=collectReviewPenalties().map(p=>({
-   tipo:(PEN[p.type]&&PEN[p.type][0])||'Otra',
-   segundos:p.seconds,reincidencia:p.repeat,detalle:p.detail
+['revAMin','revASec','revACent'].forEach(id=>$(id).addEventListener('input',()=>{clampNonNeg(id);calcRev('A')}));
+['revBMin','revBSec','revBCent'].forEach(id=>$(id).addEventListener('input',()=>{clampNonNeg(id);calcRev('B')}));
+
+function updatePublishLabel(){
+ const both=reviewMatch&&reviewMatch.bNo!=null;
+ $('publish').textContent=both?'Corroborar y publicar los 2':'Corroborar y publicar';
+ $('saveReview').textContent=both?'Guardar cambios (los 2)':'Guardar cambios';
+}
+$('unlinkB').onclick=()=>{
+ if(!reviewMatch)return;
+ reviewMatch.bNo=null;
+ $('revBTeam').textContent='SIN RIVAL VINCULADO';
+ $('revBFields').hidden=true;$('revBEmpty').hidden=false;
+ $('unlinkB').style.display='none';
+ updatePublishLabel();
+};
+
+// Busca el resultado ACTUAL (no un índice guardado) por modalidad+equipo.
+// Nunca guardamos posiciones de array para la revisión: si en el medio de
+// una revisión llega una sincronización de fondo (cola offline u otro
+// dispositivo) y la tabla de resultados se reemplaza, un índice viejo
+// podría terminar apuntando al resultado de OTRO equipo. Buscando siempre
+// por (modalidad, número) evitamos ese riesgo por completo.
+function findPendingResult(mode,no){
+  return results.find(r=>r.mode===mode&&r.no===no&&!r.published);
+}
+
+function openMatch(mode,aNo,bNo){
+ const a=findPendingResult(mode,aNo);
+ if(!a){
+   alert('Ese resultado ya no está pendiente de corroboración (puede que ya se haya publicado desde otro dispositivo). Se actualiza la lista.');
+   reviewMatch=null;$('review').hidden=true;$('reviewEmpty').hidden=false;
+   renderPending();
+   return;
+ }
+ const b=bNo!=null?findPendingResult(mode,bNo):null;
+ reviewMatch={mode,aNo,bNo:b?bNo:null};
+ $('reviewEmpty').hidden=true;$('review').hidden=false;
+ $('reviewMode').value=mode;
+
+ $('revATeam').textContent=`#${a.no} — ${a.name}`;
+ $('revAMin').value=Math.floor(a.time/60);$('revASec').value=Math.floor(a.time%60);$('revACent').value=Math.round((a.time-Math.floor(a.time))*100);
+ $('revAObs').value=a.obs||'';
+ $('revAPenalties').innerHTML='';(a.penalties||[]).forEach(p=>revPenaltyRow('A',p));
+
+ if(b){
+   $('revBTeam').textContent=`#${b.no} — ${b.name}`;
+   $('revBFields').hidden=false;$('revBEmpty').hidden=true;
+   $('unlinkB').style.display='inline-block';
+   $('revBMin').value=Math.floor(b.time/60);$('revBSec').value=Math.floor(b.time%60);$('revBCent').value=Math.round((b.time-Math.floor(b.time))*100);
+   $('revBObs').value=b.obs||'';
+   $('revBPenalties').innerHTML='';(b.penalties||[]).forEach(p=>revPenaltyRow('B',p));
+ }else{
+   $('revBTeam').textContent='SIN RIVAL VINCULADO';
+   $('revBFields').hidden=true;$('revBEmpty').hidden=false;
+   $('unlinkB').style.display='none';
+ }
+ calcRev('A');calcRev('B');
+ updatePublishLabel();
+}
+
+async function saveReviewSide(side,mode,no,publish){
+ const r=findPendingResult(mode,no);
+ if(!r) return {queued:false,skipped:true};
+ const p=side==='A'?'revA':'revB';
+ const time=(+$(p+'Min').value||0)*60+(+$(p+'Sec').value||0)+(+$(p+'Cent').value||0)/100;
+ const penalties=collectRevPen(side).map(x=>({
+   tipo:(PEN[x.type]&&PEN[x.type][0])||'Otra',
+   segundos:x.seconds,reincidencia:x.repeat,detalle:x.detail
  }));
+ const obs=$(p+'Obs').value.trim();
  const payload={
    accion:publish?'publicar_resultado':'guardar_corroboracion',
    numero:r.no,modalidad:r.mode,tiempoSegundos:time,
-   penalizaciones:penalties,observaciones:$('reviewObs').value.trim()
+   penalizaciones:penalties,observaciones:obs
  };
+ return submitAction(payload,()=>applyReviewLocally(payload,publish),(publish?'Publicar resultado #':'Corroborar resultado #')+r.no+' — '+r.mode);
+}
+
+let reviewSaving=false;
+async function saveReview(publish){
+ if(!reviewMatch||reviewSaving)return;
+ if(publish){
+   const both=reviewMatch.bNo!=null;
+   const ok=confirm('¿Confirmás CORROBORAR Y PUBLICAR'+(both?' los 2 resultados de este enfrentamiento':' este resultado')+'? Una vez publicado queda visible en el Ranking oficial.');
+   if(!ok)return;
+ }
+ const {mode,aNo,bNo}=reviewMatch;
+ const btn=publish?$('publish'):$('saveReview');
+ const otherBtn=publish?$('saveReview'):$('publish');
+ reviewSaving=true;
+ setSaving(btn,true,publish?'Publicando...':'Guardando...');
+ otherBtn.disabled=true;
  try{
-   const res=await submitAction(payload,()=>applyReviewLocally(payload,publish),(publish?'Publicar resultado #':'Corroborar resultado #')+r.no+' — '+r.mode);
-   if(res.queued){
-     reviewIndex=results.findIndex(x=>x.no===r.no&&x.mode===r.mode);
-     if(reviewIndex>=0)openReview(reviewIndex);
-     alert('Sin conexión: los cambios quedaron guardados en este dispositivo y se van a subir solos cuando vuelva la señal.'+(publish?' Ojo: la publicación se hará efectiva en el servidor recién cuando se suba.':''));
-   }else{
+   const resA=await saveReviewSide('A',mode,aNo,publish);
+   if(resA.skipped){
+     alert('El resultado de #'+aNo+' ya no está pendiente de corroboración (probablemente publicado desde otro dispositivo). No se guardó nada nuevo.');
      await syncEstadoRapido();
-     reviewIndex=results.findIndex(x=>x.no===r.no&&x.mode===r.mode);
-     if(reviewIndex>=0)openReview(reviewIndex);
-     alert(publish?'Resultado corroborado, publicado y guardado en Google Sheets.':'Cambios guardados en Google Sheets.');
+     reviewMatch=null;$('review').hidden=true;$('reviewEmpty').hidden=false;
+     return;
+   }
+   let resB=null,bSkipped=false;
+   if(bNo!=null){
+     resB=await saveReviewSide('B',mode,bNo,publish);
+     if(resB.skipped){
+       bSkipped=true;
+       alert('El resultado de #'+bNo+' ya no estaba pendiente (probablemente publicado desde otro dispositivo). Se guardó igual el de #'+aNo+'.');
+     }
+   }
+   const anyQueued=resA.queued||(resB&&resB.queued);
+   if(anyQueued){
+     alert('Sin conexión: los cambios quedaron guardados en este dispositivo y se van a subir solos cuando vuelva la señal.'+(publish?' La publicación se hará efectiva en el servidor recién cuando se suba.':''));
+   }else if(!bSkipped){
+     await syncEstadoRapido();
+     alert(publish?(bNo!=null?'Los 2 resultados del enfrentamiento fueron corroborados, publicados y guardados en Google Sheets.':'Resultado corroborado, publicado y guardado en Google Sheets.'):'Cambios guardados en Google Sheets.');
+   }
+   const stillA=findPendingResult(mode,aNo);
+   if(stillA){
+     openMatch(mode,aNo,bNo);
+   }else{
+     reviewMatch=null;$('review').hidden=true;$('reviewEmpty').hidden=false;
    }
  }catch(err){alert('No se pudo guardar: '+err.message)}
+ finally{
+   reviewSaving=false;
+   setSaving(btn,false);
+   otherBtn.disabled=false;
+ }
 }
 $('saveReview').onclick=()=>saveReview(false);$('publish').onclick=()=>saveReview(true);
 function renderHistory(){$('history').innerHTML=logs.length?[...logs].reverse().map(h=>`<div class="history-row"><time>${h.date}</time><strong>Equipo #${h.no}${h.mode?' · '+h.mode:''}<br>${h.action}</strong><span>${h.detail}</span></div>`).join(''):'<div class="empty">Sin cambios registrados.</div>'}
@@ -1392,6 +1628,7 @@ $('generateFixture').onclick=async()=>{
 
 function renderAll(){renderTeams();renderTeamSelect();renderPending();renderHistory();renderRanking();renderFixture()}
 loadQueueFromStorage();updateQueueBadge();
+loadDuelPairs();
 renderPeople({});renderAll();syncFromServer();
 setInterval(flushQueue,20000);
 
